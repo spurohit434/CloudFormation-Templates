@@ -1,58 +1,166 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFormation template for the SQS 
+
+Parameters:
+  FifoQueue:
+    Type: String
+    AllowedValues:
+      - true
+      - false
+    Default: true
+    ConstraintDescription: Possible values are true and false.
+ 
+  DeduplicationScope:
+    Type: String
+    AllowedValues:
+      - messageGroup
+      - queue
+    Default: messageGroup
+    ConstraintDescription: Deduplication scope should must be from allowed values
+   
+  ContentBasedDeduplication:
+    Type: String
+    AllowedValues:
+      - true
+      - false
+    Default: false
+    ConstraintDescription: Possible values are true and false.
+ 
+  DelaySeconds:
+    Type: Number
+    MinValue: 0
+    MaxValue: 900
+    Default: 0
+    ConstraintDescription: Can have have in the range of 0 to 900 seconds
+ 
+  MaximumMessageSize:
+    Type: Number
+    MinValue: 1024
+    MaxValue: 262144
+    Default: 262144
+    ConstraintDescription: Message size should be in the range of 1024 (1KB) to 262144 (256KB)  
+
+  MaximumRetentionPeriod:
+    Type: Number
+    MinValue: 60
+    MaxValue: 1209600
+    Default: 345600
+    ConstraintDescription: Can specify a retention period of 60 seconds to 1209600 seconds (14 days)
+  
+  VisibilityTimeout:
+    Type: Number
+    MinValue: 0
+    MaxValue: 43200
+    Default: 30
+    ConstraintDescription: Time limit is 0 seconds to 43200 seconds (12 hours)
+
+  MaxReceiveCount:
+    Type: Number
+    Default: 10
+
+  DLQVisibilityTimeout:
+    Type: Number
+    MinValue: 0
+    MaxValue: 43200
+    Default: 30
+    ConstraintDescription: Time limit is 0 seconds to 43200 seconds (12 hours)
+  
+  DLQDeduplicationScope:
+    Type: String
+    AllowedValues:
+      - messageGroup
+      - queue
+    Default: messageGroup
+    ConstraintDescription: DeduplicationScope can be messageGroup or queue
+
+  DLQContentBasedDeduplication:
+    Type: String
+    AllowedValues:
+      - true
+      - false
+    Default: false
+    ConstraintDescription: Possible values are true and false.
+
+
+Conditions:
+  IsFifoQueue: !Equals
+    - !Ref FifoQueue
+    - true
+  IsStandardQueue: !Equals
+    - !Ref FifoQueue
+    - false
+
+
 Resources:
-  MyFifoQueue:
-    Type: "AWS::SQS::Queue"
+  CustomQueue:
+    Type: AWS::SQS::Queue
+    Condition: IsFifoQueue
     Properties:
       QueueName: "FifoQueue.fifo"
-      FifoQueue: true
-      DeduplicationScope: "MessageGroup"  # Using ID-based deduplication
-      ContentBasedDeduplication: false  # Disabled as we are using ID-based deduplication
-      DelaySeconds: 0  # Delay in seconds for delivering messages (0 to 900 seconds)
-      MaximumMessageSize: 262144  # Maximum message size in bytes (up to 256 KB)
-      MessageRetentionPeriod: 345600  # Retention period in seconds (1 minute to 14 days)
-      ReceiveMessageWaitTimeSeconds: 20  # Long-polling wait time (up to 20 seconds)
-      VisibilityTimeout: 30  # Visibility timeout in seconds
-      RedrivePolicy:  # Configures dead-letter queue settings
-        deadLetterTargetArn: !GetAtt MyDeadLetterQueue.Arn
-        maxReceiveCount: 5  # Number of receives before moving to dead-letter queue
-      RedriveAllowPolicy:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal: "*"
-            Action:
-              - "sqs:SendMessage"
-            Resource: !GetAtt MyFifoQueue.Arn
-      FifoThroughputLimit: "PerQueue"  # Limit throughput to the per-queue rate for FIFO
-      KmsMasterKeyId: "alias/aws/sqs"  # Specifies an AWS managed key for encryption
-      KmsDataKeyReusePeriodSeconds: 300  # Specifies the time for reusing data keys in seconds (60 to 86400)
-      SqsManagedSseEnabled: true  # Enables SQS Managed Server-Side Encryption (SSE)
+      FifoQueue: !Ref FifoQueue
+      DeduplicationScope: !Ref DeduplicationScope  
+      ContentBasedDeduplication: !Ref ContentBasedDeduplication
+      DelaySeconds: !Ref DelaySeconds
+      MaximumMessageSize: !Ref MaximumMessageSize 
+      MessageRetentionPeriod: !Ref MaximumRetentionPeriod 
+      ReceiveMessageWaitTimeSeconds: 20  
+      VisibilityTimeout: !Ref VisibilityTimeout
+      RedrivePolicy:  
+        deadLetterTargetArn: !GetAtt MyDLQueue.Arn
+        maxReceiveCount: !Ref MaxReceiveCount  
+      FifoThroughputLimit: perMessageGroupId  
+      SqsManagedSseEnabled: true 
       Tags:
-        - Key: "Environment"
-          Value: "Production"
-        - Key: "Team"
-          Value: "Engineering"
- 
-  MyDeadLetterQueue:
-    Type: "AWS::SQS::Queue"
+        - Key: Environment
+          Value: Production
+        - Key: Team
+          Value: Engineering
+    
+  CustomStandardQueue:
+    Type: AWS::SQS::Queue
+    Condition: IsStandardQueue
     Properties:
-      QueueName: "MyDeadLetterQueue.fifo"
-      FifoQueue: true
-      DeduplicationScope: "MessageGroup"  # ID-based deduplication for dead-letter queue
-      ContentBasedDeduplication: false  # Disabled
-      MessageRetentionPeriod: 1209600  # Retention period set for 14 days
-      VisibilityTimeout: 60  # Increased visibility timeout for dead-letter queue
+      QueueName: "FifoQueue.fifo"
+      FifoQueue: !Ref FifoQueue
+      DelaySeconds: !Ref DelaySeconds
+      MaximumMessageSize: !Ref MaximumMessageSize 
+      MessageRetentionPeriod: !Ref MaximumRetentionPeriod 
+      ReceiveMessageWaitTimeSeconds: 20  
+      VisibilityTimeout: !Ref VisibilityTimeout
+      RedrivePolicy:  
+        deadLetterTargetArn: !GetAtt MyDLQueue.Arn
+        maxReceiveCount: !Ref MaxReceiveCount  
+      SqsManagedSseEnabled: true 
+      Tags:
+        - Key: Environment
+          Value: Production
+        - Key: Team
+          Value: Engineering
  
+  MyDLQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: "MyDLQueue.fifo"
+      FifoQueue: !Ref FifoQueue
+      DeduplicationScope: messageGroup
+      ContentBasedDeduplication: !Ref DLQContentBasedDeduplication 
+      MessageRetentionPeriod: 1209600  
+      VisibilityTimeout: 60
+ 
+
 Outputs:
   QueueArn:
-    Value: !GetAtt MyFifoQueue.Arn
+    Value: !GetAtt CustomQueue.Arn
+    Condition: IsFifoQueue
     Export:
-      Name: MyFifoQueueArn
+      Name: CustomQueueArn
   QueueUrl:
-    Value: !Ref MyFifoQueue
+    Value: !Ref CustomQueue
+    Condition: IsFifoQueue
     Export:
-      Name: MyFifoQueueUrl
+      Name: CustomQueueUrl
   DeadLetterQueueArn:
-    Value: !GetAtt MyDeadLetterQueue.Arn
+    Value: !GetAtt MyDLQueue.Arn
     Export:
       Name: MyDeadLetterQueueArn
  

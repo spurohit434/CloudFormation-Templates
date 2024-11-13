@@ -1,23 +1,48 @@
-MySNSTopic:
-  Type: AWS::SNS::Topic
-  Properties:
-    Subscription:
-      - Endpoint: 
-          Fn::GetAtt:
-            - "MyQueue1"
-            - "Arn"
-        Protocol: "sqs"
-      - Endpoint:
-          Fn::GetAtt:
-            - "MyQueue2" 
-            - "Arn"
-        Protocol: "sqs"
-    TopicName: "SampleTopic"
-  Outputs:
-    TopicArn:
-      Description: The ARN of the created SNS topic
-      Value: !Ref MySNSTopic
-    TopicName: 
-      Description: The name of the created SNS topic
-      Value: "SampleTopic"
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFormation template for the SQS 
+
+Parameters:
+  FifoTopic:
+    Type: String
+    AllowedValues:
+      - true
+      - false
+    Default: false
+    ConstraintDescription: Possible values are true and false.
+
+Conditions:
+  IsFifoTopic: !Equals
+    - !Ref FifoTopic
+    - true
+  IsStandardTopic: !Equals
+    - !Ref FifoTopic
+    - false
+
+Resources:
+  CustomSNSTopic:
+    Type: AWS::SNS::Topic
+    Condition: IsFifoTopic
+    Properties:
+      FifoTopic: !Ref FifoTopic
+      Subscription:
+        - Endpoint: !ImportValue CustomQueueArn
+          Protocol: "sqs"
+      TopicName: "SNSTopic123"
+
+  CustomStandardTopic:
+    Type: AWS::SNS::Topic
+    Condition: IsStandardTopic
+    Properties: 
+      FifoTopic: !Ref FifoTopic
+      Subscription:
+        - Endpoint: shailesh432004@gmail.com
+          Protocol: "email"
+      TopicName: "SnsStandardTopic"
+
+Outputs:
+  TopicArn:
+    Description: The ARN of the created SNS topic
+    Value: !Ref CustomSNSTopic
+    Condition: IsFifoTopic
+  
          
