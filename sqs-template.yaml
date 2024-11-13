@@ -1,0 +1,58 @@
+Resources:
+  MyFifoQueue:
+    Type: "AWS::SQS::Queue"
+    Properties:
+      QueueName: "FifoQueue.fifo"
+      FifoQueue: true
+      DeduplicationScope: "MessageGroup"  # Using ID-based deduplication
+      ContentBasedDeduplication: false  # Disabled as we are using ID-based deduplication
+      DelaySeconds: 0  # Delay in seconds for delivering messages (0 to 900 seconds)
+      MaximumMessageSize: 262144  # Maximum message size in bytes (up to 256 KB)
+      MessageRetentionPeriod: 345600  # Retention period in seconds (1 minute to 14 days)
+      ReceiveMessageWaitTimeSeconds: 20  # Long-polling wait time (up to 20 seconds)
+      VisibilityTimeout: 30  # Visibility timeout in seconds
+      RedrivePolicy:  # Configures dead-letter queue settings
+        deadLetterTargetArn: !GetAtt MyDeadLetterQueue.Arn
+        maxReceiveCount: 5  # Number of receives before moving to dead-letter queue
+      RedriveAllowPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal: "*"
+            Action:
+              - "sqs:SendMessage"
+            Resource: !GetAtt MyFifoQueue.Arn
+      FifoThroughputLimit: "PerQueue"  # Limit throughput to the per-queue rate for FIFO
+      KmsMasterKeyId: "alias/aws/sqs"  # Specifies an AWS managed key for encryption
+      KmsDataKeyReusePeriodSeconds: 300  # Specifies the time for reusing data keys in seconds (60 to 86400)
+      SqsManagedSseEnabled: true  # Enables SQS Managed Server-Side Encryption (SSE)
+      Tags:
+        - Key: "Environment"
+          Value: "Production"
+        - Key: "Team"
+          Value: "Engineering"
+ 
+  MyDeadLetterQueue:
+    Type: "AWS::SQS::Queue"
+    Properties:
+      QueueName: "MyDeadLetterQueue.fifo"
+      FifoQueue: true
+      DeduplicationScope: "MessageGroup"  # ID-based deduplication for dead-letter queue
+      ContentBasedDeduplication: false  # Disabled
+      MessageRetentionPeriod: 1209600  # Retention period set for 14 days
+      VisibilityTimeout: 60  # Increased visibility timeout for dead-letter queue
+ 
+Outputs:
+  QueueArn:
+    Value: !GetAtt MyFifoQueue.Arn
+    Export:
+      Name: MyFifoQueueArn
+  QueueUrl:
+    Value: !Ref MyFifoQueue
+    Export:
+      Name: MyFifoQueueUrl
+  DeadLetterQueueArn:
+    Value: !GetAtt MyDeadLetterQueue.Arn
+    Export:
+      Name: MyDeadLetterQueueArn
+ 

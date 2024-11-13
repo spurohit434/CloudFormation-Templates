@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudFormation template to create an S3 bucket with a policy to block public access.
+
+Parameters:
+  BucketName:
+    Type: String
+    Default: wg-sms-dev-v21
+    Description: Name of the S3 bucket
+
+Resources:
+  MyS3Bucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !Ref BucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+
+  MyS3BucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref MyS3Bucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyPublicRead
+            Effect: Deny
+            Principal: "*"
+            Action:
+              - "s3:GetObject"
+              - "s3:GetObjectAcl"
+              - "s3:ListBucket"
+            Resource:
+              - !Sub "arn:aws:s3:::${BucketName}"
+              - !Sub "arn:aws:s3:::${BucketName}/*"
+            Condition:
+              Bool:
+                aws:SecureTransport: "false"
+
+          - Sid: DenyPublicWrite
+            Effect: Deny
+            Principal: "*"
+            Action:
+              - "s3:PutObject"
+              - "s3:PutObjectAcl"
+              - "s3:PutBucketAcl"
+            Resource: !Sub "arn:aws:s3:::${BucketName}/*"
+            Condition:
+              Bool:
+                aws:SecureTransport: "false"
+
+Outputs:
+  BucketName:
+    Description: Name of the S3 bucket
+    Value: !Ref MyS3Bucket

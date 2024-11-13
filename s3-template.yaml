@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Simple CloudFormation template for S3 bucket creation with configurations
+
+Parameters:
+  BucketName:
+    Type: String
+    Default: wg-sms-dev-v2
+
+Resources:
+  MainBucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !Ref BucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+
+  # Bucket Policy to allow access from EC2 and Fargate
+  MainBucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref MainBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowAccessFromEC2AndFargate
+            Effect: Allow
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - !Sub "${MainBucket.Arn}/*"
+              - !GetAtt MainBucket.Arn
+            Condition:
+              StringEquals:
+                aws:SourceVpc: vpc-004fd89e894a8fa97 # Replace <Your_VPC_ID> with the actual VPC ID
+
+Outputs:
+  MainBucketName:
+    Description: Name of the main bucket
+    Value: !Ref MainBucket

@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: This template creates an IAM user with a separate managed policy.
+
+Parameters:
+  Environment:
+    Description: Select the environment
+    Type: String
+    Default: Dev
+    AllowedValues: 
+      - Dev
+      - Prod
+      - QA
+    ConstraintDescription: Enviornment value should must be from allowed values
+    
+  UserName:
+    Description: Enter the IAM user name
+    Type: String
+    Default: CustomTaskUser
+
+  PolicyName:
+    Description: Enter the policy name
+    Type: String
+    Default: CustomPolicy
+
+Resources:
+  CustomTaskUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Ref UserName
+
+  CustomTaskPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: !Ref UserName
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: VisualEditor0
+            Effect: Allow
+            Action:
+              - "iam:ListUsers"  
+              - "iam:GetUser" 
+            Resource: !GetAtt CustomTaskUser.Arn
+      Users: 
+        - !Ref CustomTaskUser
+
+Outputs:
+  UserArnName:
+    Description: The ARN of the IAM user
+    Value: !GetAtt CustomTaskUser.Arn
+
+  PolicyArnName:
+    Description: The ARN of the IAM policy
+    Value: !Ref CustomTaskPolicy

@@ -1,0 +1,124 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Parent template to create IAM and EC2 resources using nested stacks.
+
+Parameters:
+  Environment:
+    Description: Select the environment
+    Type: String
+    Default: Dev
+    AllowedValues: 
+      - Dev
+      - Prod
+      - QA
+    ConstraintDescription: Environment value must be from allowed values.
+
+  AvailabilityZone:
+    Description: Enter the availability zone (e.g., us-east-1a)
+    Type: String
+    Default: us-east-1a 
+
+  InstanceType:
+    Description: Enter the EC2 instance type (e.g., t2.micro)
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t2.micro
+    ConstraintDescription: Instance type must be from allowed values.
+
+  InstanceName:
+    Description: Enter the EC2 instance name
+    Type: String
+    Default: SchoolMgmtService-Instance
+
+  PortNumber:
+    Description: Port number to allow inbound access (e.g., 22 for SSH, 80 for HTTP)
+    Type: Number
+    Default: 22
+
+  IpProtocol:
+    Description: Protocol to allow (e.g., tcp, udp)
+    Type: String
+    Default: tcp
+    AllowedValues: 
+      - tcp
+      - udp
+    ConstraintDescription: Protocol should be from allowed values.
+
+  CidrIp:
+    Description: CIDR range to allow inbound access (e.g., 0.0.0.0/0 for all IPs)
+    Type: String
+    Default: "0.0.0.0/0"
+
+  VolumeSize:
+    Description: Size of the EBS volume
+    Type: Number
+    Default: 2
+    MinValue: 1
+    MaxValue: 8
+    ConstraintDescription: Volume size should be between 1 and 8 GB.
+
+  DeletionPolicy:
+    Description: Deletion policy of the EBS volume
+    Type: String
+    Default: Delete
+    AllowedValues:
+      - Delete
+      - Snapshot
+      - Retain
+    ConstraintDescription: DeletionPolicy should be from allowed values.
+
+  UserName:
+    Description: Enter the IAM user name
+    Type: String
+    Default: CustomTaskUser
+
+  PolicyName:
+    Description: Enter the policy name
+    Type: String
+    Default: CustomPolicy
+
+Resources:
+  IAMStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateBody: file://C:/Users/spurohit/OneDrive - WatchGuard Technologies Inc/Desktop/iam-template.yaml
+      Parameters:
+        Environment: !Ref Environment
+        UserName: !Ref UserName
+        PolicyName: !Ref PolicyName
+
+  EC2Stack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateBody: file://C:/Users/spurohit/OneDrive - WatchGuard Technologies Inc/Desktop/ec2-template.yaml
+      Parameters:
+        Environment: !Ref Environment
+        AvailabilityZone: !Ref AvailabilityZone
+        InstanceType: !Ref InstanceType
+        InstanceName: !Ref InstanceName
+        PortNumber: !Ref PortNumber
+        IpProtocol: !Ref IpProtocol
+        CidrIp: !Ref CidrIp
+        VolumeSize: !Ref VolumeSize
+        DeletionPolicy: !Ref DeletionPolicy
+
+Outputs:
+  IAMUserArn:
+    Description: The ARN of the IAM user
+    Value: !GetAtt IAMStack.Outputs.UserArnName
+
+  IAMPolicyArn:
+    Description: The ARN of the IAM policy
+    Value: !GetAtt IAMStack.Outputs.PolicyArnName
+
+  EC2InstanceID:
+    Description: The ID of the EC2 instance
+    Value: !GetAtt EC2Stack.Outputs.InstanceID
+
+  EC2ElasticIP:
+    Description: The Elastic IP of the EC2 instance
+    Value: !GetAtt EC2Stack.Outputs.ElasticIP
+
+  EC2AvailabilityZone:
+    Description: The Availability Zone of the EC2 instance
+    Value: !GetAtt EC2Stack.Outputs.InstanceAvailabilityZone

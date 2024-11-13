@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: This is a dedicated template to create an IAM user, EC2 instance, security group, EIP, and volume.
+
+Resources:
+  MyUser:
+    Type: AWS::IAM::User
+    Properties: 
+      Policies: 
+        - PolicyName: MyUserPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - iam:ListUsers
+                  - iam:GetUser
+                Resource: !GetAtt MyUser.Arn #"arn:aws:iam::311141548147:user/Unique"
+
+  MyPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: root
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: VisualEditor0
+            Effect: Allow
+            Action:
+              - iam:ListUsers
+              - iam:GetUser
+            Resource: !GetAtt MyUser.Arn #"arn:aws:iam::311141548147:user/Unique"
+      Users: 
+        - !Ref MyUser
+
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: us-east-1a
+      ImageId: ami-0a3c3a20c09d6f377
+      InstanceType: t2.micro
+      SecurityGroups:
+        - !Ref SSHSecurityGroup
+
+  MyEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref MyInstance
+    DependsOn: MyInstance
+
+  SSHSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
+
+  NewVolume:
+    Type: AWS::EC2::Volume
+    Properties: 
+      Size: 2
+      Encrypted: true
+      AvailabilityZone: !GetAtt MyInstance.AvailabilityZone
+      Tags:
+        - Key: MyTag
+          Value: TagValue
+    DeletionPolicy: Snapshot
+
+  MountVolume:
+    Type: AWS::EC2::VolumeAttachment
+    Properties: 
+      InstanceId: !Ref MyInstance
+      VolumeId: !Ref NewVolume
+      Device: /dev/sdh
+    
