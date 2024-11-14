@@ -1,0 +1,46 @@
+[
+    {
+      "ParameterKey": "FifoQueue",
+      "ParameterValue": "false"
+    },
+    {
+      "ParameterKey": "DeduplicationScope",
+      "ParameterValue": "messageGroup"
+    },
+    {
+      "ParameterKey": "ContentBasedDeduplication",
+      "ParameterValue": "false"
+    },
+    {
+      "ParameterKey": "DelaySeconds",
+      "ParameterValue": "0"
+    },
+    {
+      "ParameterKey": "MaximumMessageSize",
+      "ParameterValue": "262144"
+    },
+    {
+      "ParameterKey": "MaximumRetentionPeriod",
+      "ParameterValue": "345600"
+    },
+    {
+      "ParameterKey": "VisibilityTimeout",
+      "ParameterValue": "30"
+    },
+    {
+      "ParameterKey": "MaxReceiveCount",
+      "ParameterValue": "10"
+    },
+    {
+      "ParameterKey": "DLQVisibilityTimeout",
+      "ParameterValue": "30"
+    },
+    {
+      "ParameterKey": "DLQDeduplicationScope",
+      "ParameterValue": "messageGroup"
+    },
+    {
+      "ParameterKey": "DLQContentBasedDeduplication",
+      "ParameterValue": "false"
+    }
+  ]

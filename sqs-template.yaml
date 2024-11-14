@@ -7,7 +7,7 @@ Parameters:
     AllowedValues:
       - true
       - false
-    Default: true
+    Default: false
     ConstraintDescription: Possible values are true and false.
  
   DeduplicationScope:
@@ -106,7 +106,7 @@ Resources:
       ReceiveMessageWaitTimeSeconds: 20  
       VisibilityTimeout: !Ref VisibilityTimeout
       RedrivePolicy:  
-        deadLetterTargetArn: !GetAtt MyDLQueue.Arn
+        deadLetterTargetArn: !GetAtt CustomDLQueue.Arn
         maxReceiveCount: !Ref MaxReceiveCount  
       FifoThroughputLimit: perMessageGroupId  
       SqsManagedSseEnabled: true 
@@ -120,15 +120,14 @@ Resources:
     Type: AWS::SQS::Queue
     Condition: IsStandardQueue
     Properties:
-      QueueName: "FifoQueue.fifo"
-      FifoQueue: !Ref FifoQueue
+      QueueName: StandardQueue
       DelaySeconds: !Ref DelaySeconds
       MaximumMessageSize: !Ref MaximumMessageSize 
       MessageRetentionPeriod: !Ref MaximumRetentionPeriod 
       ReceiveMessageWaitTimeSeconds: 20  
       VisibilityTimeout: !Ref VisibilityTimeout
       RedrivePolicy:  
-        deadLetterTargetArn: !GetAtt MyDLQueue.Arn
+        deadLetterTargetArn: !GetAtt CustomStandardDLQueue.Arn
         maxReceiveCount: !Ref MaxReceiveCount  
       SqsManagedSseEnabled: true 
       Tags:
@@ -137,30 +136,55 @@ Resources:
         - Key: Team
           Value: Engineering
  
-  MyDLQueue:
+  CustomDLQueue:
     Type: AWS::SQS::Queue
+    Condition: IsFifoQueue
     Properties:
-      QueueName: "MyDLQueue.fifo"
+      QueueName: "CustomDLQueue.fifo"
       FifoQueue: !Ref FifoQueue
       DeduplicationScope: messageGroup
       ContentBasedDeduplication: !Ref DLQContentBasedDeduplication 
+      MessageRetentionPeriod: 1209600  
+      VisibilityTimeout: 60
+  
+  CustomStandardDLQueue:
+    Type: AWS::SQS::Queue
+    Condition: IsStandardQueue
+    Properties:
+      QueueName: CustomStandardDLQueue 
       MessageRetentionPeriod: 1209600  
       VisibilityTimeout: 60
  
 
 Outputs:
   QueueArn:
-    Value: !GetAtt CustomQueue.Arn
+    Value: !GetAtt CustomQueue.Arn  #fifo
     Condition: IsFifoQueue
     Export:
       Name: CustomQueueArn
+  StanadardQueueArn:
+    Value: !GetAtt CustomStandardQueue.Arn
+    Condition: IsStandardQueue
+    Export:
+      Name: CustomStandardQueueArn
   QueueUrl:
-    Value: !Ref CustomQueue
+    Value: !Ref CustomQueue #fifo
     Condition: IsFifoQueue
     Export:
       Name: CustomQueueUrl
-  DeadLetterQueueArn:
-    Value: !GetAtt MyDLQueue.Arn
+  StandardQueueUrl:
+    Value: !Ref CustomStandardQueue
+    Condition: IsStandardQueue
     Export:
-      Name: MyDeadLetterQueueArn
+      Name: CustomStandardQueueUrl
+  DeadLetterQueueArn:
+    Value: !GetAtt CustomDLQueue.Arn   # fifo
+    Condition: IsFifoQueue
+    Export:
+      Name: CustomDLQueueArn
+  StandardDLQueueArn:
+    Value: !GetAtt CustomStandardDLQueue.Arn
+    Condition: IsStandardQueue
+    Export:
+      Name: CustomStandardDLQueueArn
  

@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: CloudFormation template for the SQS 
+Description: CloudFormation template for the SNS 
 
 Parameters:
   FifoTopic:
@@ -7,7 +7,7 @@ Parameters:
     AllowedValues:
       - true
       - false
-    Default: false
+    Default: true
     ConstraintDescription: Possible values are true and false.
 
 Conditions:
