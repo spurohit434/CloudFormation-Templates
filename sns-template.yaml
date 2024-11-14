@@ -7,8 +7,12 @@ Parameters:
     AllowedValues:
       - true
       - false
-    Default: true
+    Default: false
     ConstraintDescription: Possible values are true and false.
+  EmailAddress:
+    Type: String
+    AllowedPattern: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$
+    ConstraintDescription: Enter valid email address for sending notification.
 
 Conditions:
   IsFifoTopic: !Equals
@@ -19,7 +23,7 @@ Conditions:
     - false
 
 Resources:
-  CustomSNSTopic:
+  CustomFifoSNSTopic:
     Type: AWS::SNS::Topic
     Condition: IsFifoTopic
     Properties:
@@ -27,22 +31,27 @@ Resources:
       Subscription:
         - Endpoint: !ImportValue CustomQueueArn
           Protocol: "sqs"
-      TopicName: "SNSTopic123"
+      TopicName: SNSFifoTopic
 
-  CustomStandardTopic:
+  CustomStandardSNSTopic:
     Type: AWS::SNS::Topic
     Condition: IsStandardTopic
     Properties: 
       FifoTopic: !Ref FifoTopic
       Subscription:
-        - Endpoint: shailesh432004@gmail.com
+        - Endpoint: !Ref EmailAddress
           Protocol: "email"
-      TopicName: "SnsStandardTopic"
+        - Endpoint: !ImportValue CustomStandardQueueArn
+          Protocol: "sqs"
+      TopicName: SNSStandardTopic
 
 Outputs:
-  TopicArn:
+  FifoTopicArn:
     Description: The ARN of the created SNS topic
-    Value: !Ref CustomSNSTopic
+    Value: !Ref CustomFifoSNSTopic
     Condition: IsFifoTopic
-  
+  StandardTopicArn:
+    Description: The ARN of the created SNS topic
+    Value: !Ref CustomStandardSNSTopic
+    Condition: IsStandardTopic
          
