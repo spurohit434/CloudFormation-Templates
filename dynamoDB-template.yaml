@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Cloudformation template for DynamoDB table creation"
+ 
+Parameters:
+  TableName:
+    Type: String
+    Description: Enter name of the table
+    Default: DemoTable
+  TableClass:
+    Type: String
+    Description: Enter the storage class of the DynamoDB table
+    AllowedValues:
+      - STANDARD
+      - STANDARD_INFREQUENT_ACCESS
+    Default: STANDARD
+  BillingMode:
+    Type: String
+    Description: Enter the billing mode - provisioned or on-demand
+    AllowedValues:
+      - PROVISIONED
+      - PAY_PER_REQUEST
+    Default: PROVISIONED
+  DeleteProtection:
+    Type: String
+    Description: Do you want to enable deletion protection
+    AllowedValues:
+      - true
+      - false
+    Default: false    
+  RCUs:
+    Type: Number
+    Description: Enter the Read capacity units
+    Default: 2
+  WCUs:
+    Type: Number
+    Description: Enter the Write capacity units
+    Default: 2
+  StreamView:
+    Type: String
+    Default: NEW_IMAGE
+    AllowedValues:
+      - KEYS_ONLY
+      - NEW_AND_OLD_IMAGES
+      - OLD_IMAGE
+      - NEW_IMAGE
+   
+Resources:
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref TableName
+      TableClass: !Ref TableClass
+      AttributeDefinitions:
+        -
+          AttributeName: UserId
+          AttributeType: S
+      BillingMode: !Ref BillingMode
+      ProvisionedThroughput:     # condition for on demand 
+        ReadCapacityUnits: !Ref RCUs
+        WriteCapacityUnits: !Ref WCUs
+      DeletionProtectionEnabled: !Ref DeleteProtection
+      KeySchema:
+        -
+          AttributeName: UserId
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: !Ref StreamView
+ 
+Outputs:
+  DynamoDBTableARN:
+    Description: "The ARN of the DynamoDB table"
+    Value: !GetAtt DynamoDBTable.StreamArn
+    Export:
+      Name: DynamoDBTableARN

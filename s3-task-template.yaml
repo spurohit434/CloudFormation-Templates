@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Cloudformation template for bucket creation.
+ 
+Parameters:
+  BucketName:
+    Type: String
+    Default: task-bucket-wg-v1
+ 
+Resources:
+  S3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Ref BucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+ 
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Id: Policy1732185048154
+        Statement:
+        - Sid: Stmt1732185043246
+          Effect: Allow
+          Principal:
+            AWS: arn:aws:iam::311141548147:user/unique
+          Action:
+          - s3:GetObject
+          - s3:PutObject
+          Resource: !Join ["", [ "arn:aws:s3:::", !Ref S3Bucket, "/*" ]]
+ 
+Outputs:
+  BucketName:
+    Value: !Ref S3Bucket
+    Description: Name of the S3 bucket.

@@ -54,4 +54,3 @@ Outputs:
     Description: The ARN of the created SNS topic
     Value: !Ref CustomStandardSNSTopic
     Condition: IsStandardTopic
-         

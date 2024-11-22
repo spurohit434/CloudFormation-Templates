@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: An AWS Serverless Application Model template describing your function.
+
+Parameters:
+  Runtime:
+    Description: Set the runtime of the function
+    Type: String
+    Default: python3.13
+    AllowedValues:
+      - python3.13
+      - nodejs20.x
+    ConstraintDescription: Runtime should must be from the allowed values
+  Architectures:
+    Description: Set the Architecture of the function
+    Type: String
+    Default: x86_64
+    AllowedValues:
+      - x86_64
+      - arm64
+    ConstraintDescription: Architectures should must be from the allowed values
+  EphemeralStorage:
+    Description: Set the EphemeralStorage of the function
+    Type: Number
+    Default: 512
+    MaxValue: 10240
+    MinValue: 512
+    ConstraintDescription: EphemeralStorage should must be from the allowed values
+  MemorySize:
+    Description: Set the MemorySize of the function
+    Type: Number
+    Default: 128
+    MaxValue: 10240
+    MinValue: 128
+    ConstraintDescription: MemorySize should must be from the allowed values
+  FunctionName:
+    Type: String
+    Default: Task_LambdaCFN
+  Timeout:
+    Type: Number
+    Default: 10
+    MaxValue: 900
+    MinValue: 1
+    ConstraintDescription: Timeout should must be from the allowed values
+  TracingConfig:
+    Description: Set the TracingConfig of the function
+    Type: String
+    Default: Active
+
+Resources:
+  TaskLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties: 
+      Description: My Lambda function for updating S3 bucket and streaming data from DynamoDB
+      Runtime: !Ref Runtime
+      Role: arn:aws:iam::311141548147:role/service-role/Test-lambda-function-role-2xkpuxha
+      Handler: lambda_function.lambda_handler
+      Architectures: 
+        - !Ref Architectures
+      Code:
+        S3Bucket: lambdasam-88161c6327-ap-south-1
+        S3Key: lambda_function.zip
+      EphemeralStorage:
+        Size: !Ref EphemeralStorage
+      MemorySize: !Ref MemorySize
+      FunctionName: !Ref FunctionName
+      Timeout: !Ref Timeout
+      
+
+  MyEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !ImportValue DynamoDBTableARN
+      FunctionName:
+        Fn::GetAtt:
+          - "TaskLambdaFunction"
+          - "Arn"
+      StartingPosition: LATEST
