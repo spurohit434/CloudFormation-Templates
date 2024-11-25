@@ -12,6 +12,7 @@ Parameters:
   EmailAddress:
     Type: String
     AllowedPattern: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$
+    Default: shailesh432004@gmail.com
     ConstraintDescription: Enter valid email address for sending notification.
 
 Conditions:
@@ -54,3 +55,5 @@ Outputs:
     Description: The ARN of the created SNS topic
     Value: !Ref CustomStandardSNSTopic
     Condition: IsStandardTopic
+    Export:
+      Name: StandardTopicArn

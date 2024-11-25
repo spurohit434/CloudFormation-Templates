@@ -1,0 +1,23 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: A starter AWS lambda function
+
+Resources:
+  helloworldpython3:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.lambda_handler
+      Runtime: python3.13
+      CodeUri: s3://wg-schoolmgmt-v1/51d49464548b4d1c722c0a276df4e1aa
+      Description: A started AWS lambda function
+      MemorySize: 128
+      Timeout: 3
+      Environment:
+        Variables:
+          REGION_NAME: !Ref AWS::Region
+      FunctionName: Lambda_Function_SAM
+      Events:
+        SNSEvent:
+          Type: SNS
+          Properties:
+            Topic: !ImportValue StandardTopicArn
