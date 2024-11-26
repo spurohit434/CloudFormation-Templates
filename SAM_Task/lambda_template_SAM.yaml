@@ -8,7 +8,7 @@ Resources:
     Properties:
       Handler: app.lambda_handler
       Runtime: python3.13
-      CodeUri: s3://wg-schoolmgmt-v1/51d49464548b4d1c722c0a276df4e1aa
+      CodeUri: src/
       Description: A started AWS lambda function
       MemorySize: 128
       Timeout: 3

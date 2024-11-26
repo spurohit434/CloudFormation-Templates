@@ -1,0 +1,10 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: A starter AWS API Gateway
+
+Resources:
+  ApiGatewayApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      DefinitionUri: s3://wg-schoolmgmt-v1/6f1fe6354018aaeb346c30f20891df56
