@@ -1,37 +1,108 @@
-AWSTemplateFormatVersion: 2010-09-09
-Transform: AWS::Serverless-2016-10-31
-Description: A starter AWS lambda function
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Description: A starter AWS Lambda function with configurable parameters.
+ 
+Parameters:
+  TableName:
+    Type: String
+    Description: Name of the DynamoDB table.
+    Default: wg-project1-users-table
+ 
+  ReadCapacityUnits:
+    Type: Number
+    Description: Read capacity units for the DynamoDB table.
+    Default: 2
+    MinValue: 1
+    MaxValue: 3000
+ 
+  WriteCapacityUnits:
+    Type: Number
+    Description: Write capacity units for the DynamoDB table.
+    Default: 2
+    MinValue: 1
+    MaxValue: 1000
+ 
+  LambdaTimeout:
+    Type: Number
+    Description: Timeout in seconds for the Lambda function.
+    Default: 3
+    MinValue: 1
+    MaxValue: 900
+ 
+  LambdaRuntime:
+    Type: String
+    Description: Runtime for the Lambda function.
+    Default: python3.13
+    AllowedValues:
+      - python3.13
 
+ 
 Resources:
-  helloworldpython3:
-    Type: AWS::Serverless::Function
+  LambdaFunction:
+    Type: 'AWS::Serverless::Function'
     Properties:
       Handler: app.lambda_handler
-      Runtime: python3.13
+      Runtime: !Ref LambdaRuntime
       CodeUri: src/
-      Description: A started AWS lambda function
-      MemorySize: 128
-      Timeout: 3
+      Timeout: !Ref LambdaTimeout
       Environment:
         Variables:
-          TABLE_NAME: !Ref Table
+          TABLE_NAME: !Ref TableName
           REGION_NAME: !Ref AWS::Region
       Events:
         HelloWorldSAMAPI:
           Type: Api
           Properties:
-            Path: /hello
-            Method: GET
+            Path: /
+            Method: get
+            RestApiId:
+              Ref: ApiGatewayApi
       Policies:
         - DynamoDBCrudPolicy:
-            TableName: !Ref Table
-    
-  # Table:
-  #   Type: AWS::Serverless::SimpleTable
-  #   Properties:
-  #     PrimaryKey:
-  #       Name: greeting
-  #       Type: String
-  #     ProvisionedThroughput:
-  #       ReadCapacityUnits: 2
-  #       WriteCapacityUnits: 2
+            TableName: !Ref TableName
+ 
+  Table:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName: !Ref TableName
+      ProvisionedThroughput:
+        ReadCapacityUnits: !Ref ReadCapacityUnits
+        WriteCapacityUnits: !Ref WriteCapacityUnits
+
+  ApiGatewayApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      DefinitionUri: swagger/swagger.yaml
+      Name: ApiGatewayProd
+
+Outputs:
+  LambdaFunctionArn:
+    Description: ARN of the Lambda function.
+    Value: !GetAtt LambdaFunction.Arn
+    Export:
+      Name: MicroserviceLambdaArn
+
+  DynamoDBTableName:
+    Description: Name of the DynamoDB table.
+    Value: !Ref TableName
+    Export:
+      Name: DynamoDBTableName
+
+  DynamoDBTableArn:
+    Description: ARN of the DynamoDB table.
+    Value: !GetAtt Table.Arn
+    Export:
+      Name: DynamoDBTableArn
+
+  ApiGatewayUrl:
+    Description: URL of the API Gateway stage.
+    Value: !Sub https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/
+    Export:
+      Name: ApiGatewayProdUrl
+
+  ApiGatewayId:
+    Description: ID of the API Gateway.
+    Value: !Ref ApiGatewayApi
+    Export:
+      Name: ApiGatewayProdId

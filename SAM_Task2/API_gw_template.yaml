@@ -7,7 +7,6 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Prod
-    #  Cors:  "'*'"
       DefinitionUri: src/swagger.yaml
   # ApiFunction: # Adds a GET method at the root resource via an Api event
   #   Type: AWS::Serverless::Function

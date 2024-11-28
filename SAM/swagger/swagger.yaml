@@ -1,0 +1,532 @@
+openapi: 3.0.1
+info:
+  title: School Management System
+  version: v0
+servers:
+  - url: 'http://localhost:8080'
+    description: Generated server url
+paths:
+  '/api/user/{id}':
+    get:
+      tags:
+        - User-controller
+      operationId: getUserById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserNotFound'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+      x-amazon-apigateway-integration:
+        uri: arn:aws:apigateway:ap-south-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-south-1:311141548147:function:API_gateway_Integration/invocations
+        httpMethod: GET
+        type: aws_proxy
+    put:
+      tags:
+        - User-controller
+      operationId: updateUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserNotFound'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+      x-amazon-apigateway-integration:
+        uri: arn:aws:apigateway:ap-south-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-south-1:311141548147:function:API_gateway_Integration/invocations
+        httpMethod: PUT
+        type: aws_proxy
+    delete:
+      tags:
+        - User-controller
+      operationId: deleteUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDeleted'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unauthorized'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserNotFound'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalServerError'
+      x-amazon-apigateway-integration:
+        uri: arn:aws:apigateway:ap-south-1:lambda:path/2015-03-31/functions/arn:aws:lambda:ap-south-1:311141548147:function:API_gateway_Integration/invocations
+        httpMethod: DELETE
+        type: aws_proxy
+components:
+  schemas:
+    User:
+      required:
+        - email
+        - password
+        - role
+        - username
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          maxLength: 2147483647
+          minLength: 1
+          type: string
+        dob:
+          type: string
+          format: date
+        contactNumber:
+          type: string
+        role:
+          type: string
+          enum:
+            - Admin
+            - Faculty
+            - Student
+        password:
+          type: string
+        standard:
+          type: integer
+          format: int32
+        address:
+          type: string
+        username:
+          maxLength: 2147483647
+          minLength: 4
+          type: string
+        age:
+          maximum: 120
+          minimum: 18
+          type: integer
+          format: int32
+        email:
+          type: string
+        gender:
+          type: string
+        rollNo:
+          type: string
+        mentorOf:
+          type: integer
+          format: int32
+      example:
+        id: L13a0b72
+        name: Aaron
+        email: Jack.Bergstrom24@hotmail.com
+        username: Franz.Bartoletti
+        age: 22
+        role: Student
+        gender: M
+        dob: '2002-01-15'
+        contactNumber: '1234567890'
+        password: securePassword123
+        standard: 10
+        address: '123 Main St, Anytown, USA'
+        rollNo: R12345
+        mentorOf: 0
+    Fee:
+      required:
+        - feeAmount
+        - studentId
+      type: object
+      properties:
+        studentId:
+          type: string
+        feeAmount:
+          maximum: 10000
+          minimum: 0
+          type: number
+          format: double
+        deadline:
+          type: string
+          format: date
+        fine:
+          minimum: 0
+          type: number
+          format: double
+    FeeResponse:
+      type: object
+      properties:
+        feeUpdated:
+          type: boolean
+        feeAdded:
+          type: boolean
+        feeAmount:
+          type: number
+          format: double
+        fine:
+          type: number
+          format: double
+        studentId:
+          type: string
+    Course:
+      required:
+        - standard
+      type: object
+      properties:
+        courseId:
+          type: string
+        standard:
+          maximum: 12
+          minimum: 1
+          type: integer
+          format: int32
+        courseName:
+          type: string
+    CourseMarks:
+      required:
+        - courseId
+        - marks
+      type: object
+      properties:
+        id:
+          type: string
+        courseId:
+          type: string
+        marks:
+          maximum: 100
+          minimum: 0
+          type: number
+          format: double
+        standard:
+          type: integer
+          format: int32
+    Notification:
+      required:
+        - description
+        - type
+        - id
+      type: object
+      properties:
+        notificationId:
+          type: string
+        id:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+        dateIssued:
+          type: string
+          format: date
+    Leaves:
+      required:
+        - content
+      type: object
+      properties:
+        leaveId:
+          type: string
+        id:
+          type: string
+        content:
+          type: string
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        status:
+          type: string
+          enum:
+            - Approved
+            - Rejected
+            - Pending
+      example:
+        leaveId: L001
+        id: U123
+        content: Medical leave due to illness
+        startDate: '2023-10-01'
+        endDate: '2023-10-05'
+        status: Approved
+    Issue:
+      required:
+        - message
+        - status
+      type: object
+      properties:
+        issueID:
+          type: string
+        message:
+          type: string
+        id:
+          type: string
+        status:
+          type: string
+          enum:
+            - PENDING
+            - RESOLVED
+        createdAt:
+          type: string
+          format: date
+    Attendance:
+      required:
+        - date
+        - standard
+        - status
+        - studentId
+      type: object
+      properties:
+        studentId:
+          type: string
+        standard:
+          maximum: 12
+          minimum: 1
+          type: integer
+          format: int32
+        date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum:
+            - P
+            - A
+    JwtUser:
+      required:
+        - password
+        - username
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+    CourseMarksDTO:
+      type: object
+      properties:
+        courseId:
+          type: string
+        courseName:
+          type: string
+        marks:
+          type: number
+          format: double
+    MarksheetResponseDTO:
+      type: object
+      properties:
+        id:
+          type: string
+        courseMarks:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseMarksDTO'
+        totalMarks:
+          type: number
+          format: double
+        percentage:
+          type: number
+          format: double
+        result:
+          type: string
+    Logout:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: string
+        data:
+          type: object
+      required:
+        - message
+        - status
+        - data
+      example:
+        message: Logged out successfully
+        status: Success
+        data: null
+    LoginResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: string
+        data:
+          type: object
+      required:
+        - message
+        - status
+        - data
+      example:
+        message: Logged in successfully
+        status: Success
+        data:
+          JWT Token: eyJ0eXAiOiJK********6C6hIbFk4
+    Unauthorized:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: string
+        data:
+          type: object
+      required:
+        - message
+        - status
+        - data
+      example:
+        message: Unauthorized Access
+        status: Error
+        data:
+          'null': null
+    UserNotFound:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: string
+        data:
+          type: object
+      required:
+        - message
+        - status
+        - data
+      example:
+        message: User Not Found
+        status: Error
+        data:
+          'null': null
+    UserDTO:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: string
+        data:
+          type: object
+      required:
+        - message
+        - status
+        - data
+      example:
+        message: User Fetched Successfully
+        status: Success
+        data:
+          id: L13a0b72
+          name: Aaron
+          email: Jack.Bergstrom24@hotmail.com
+          username: Franz.Bartoletti
+          age: 22
+          role: Student
+          gender: M
+          dob: '2002-01-15'
+          contactNumber: '1234567890'
+          password: securePassword123
+          standard: 10
+          address: '123 Main St, Anytown, USA'
+          rollNo: R12345
+          mentorOf: 0
+    UserDeleted:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: string
+        data:
+          type: object
+      required:
+        - message
+        - status
+        - data
+      example:
+        message: User Deleted Successfully
+        status: Success
+        data: {}
+    InternalServerError:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: string
+        data:
+          type: object
+      required:
+        - message
+        - status
+        - data
+      example:
+        message: Internal Server Error
+        status: Error
+        data: {}
