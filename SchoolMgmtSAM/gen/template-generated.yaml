@@ -1,0 +1,82 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: A starter AWS Lambda function with configurable parameters.
+Parameters:
+  LambdaTimeout:
+    Type: Number
+    Description: Timeout in seconds for the Lambda function.
+    Default: 30
+    MinValue: 1
+    MaxValue: 900
+  LambdaRuntime:
+    Type: String
+    Description: Runtime for the Lambda function.
+    Default: java21
+    AllowedValues:
+    - python3.13
+    - java21
+  MemorySize:
+    Type: Number
+    Description: Memory allocated to the function
+    Default: 512
+    MinValue: 128
+    MaxValue: 10240
+Resources:
+  LambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: com.wg.StreamLambdaHandler::handleRequest
+      Runtime:
+        Ref: LambdaRuntime
+      CodeUri: s3://schoolmgmtawsbucket/SchoolMgmtAWS-1.0-SNAPSHOT-lambda-package.zip
+      MemorySize:
+        Ref: MemorySize
+      Timeout:
+        Ref: LambdaTimeout
+      Environment:
+        Variables:
+          REGION_NAME:
+            Ref: AWS::Region
+      Events:
+        SchoolMgmtApiGW:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+            RestApiId:
+              Ref: SchoolMgmtApi
+  SchoolMgmtApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Name: ApiGatewayProd
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Ref: LambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub: arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${SchoolMgmtApi}/*
+Outputs:
+  LambdaFunctionArn:
+    Description: ARN of the Lambda function.
+    Value:
+      Fn::GetAtt:
+      - LambdaFunction
+      - Arn
+    Export:
+      Name: MicroserviceLambdaArn
+  ApiGatewayUrl:
+    Description: URL of the API Gateway stage.
+    Value:
+      Fn::Sub: https://${SchoolMgmtApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/
+    Export:
+      Name: ApiGatewayProdUrl
+  ApiGatewayId:
+    Description: ID of the API Gateway.
+    Value:
+      Ref: SchoolMgmtApi
+    Export:
+      Name: ApiGatewayProdId
